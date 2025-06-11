@@ -29,19 +29,22 @@ inline bool directory_exists(const std::string &name) {
 
 void convert_games(const std::string &pgn_file_name, Options options) {
   int game_id = 0;
+  std::size_t positions_written = 0;
   pgn_t pgn[1];
   pgn_open(pgn, pgn_file_name.c_str());
   TrainingDataWriter writer(max_files_per_directory, chunks_per_file);
   while (pgn_next_game(pgn) && game_id < max_games_to_convert) {
     PGNGame game(pgn);
-    writer.EnqueueChunks(game.getChunks(options));
+    auto chunks = game.getChunks(options);
+    positions_written += chunks.size();
+    writer.EnqueueChunks(chunks);
     game_id++;
     if (game_id % 1000 == 0) {
-      std::cout << game_id << " games written." << std::endl;
+      std::cout << game_id << " games written, " << positions_written << " positions written." << std::endl;
     }
   }
   writer.Finalize();
-  std::cout << "Finished writing " << game_id << " games." << std::endl;
+  std::cout << "Finished writing " << game_id << " games and " << positions_written << " positions." << std::endl;
   pgn_close(pgn);
 }
 
